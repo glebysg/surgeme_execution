@@ -10,7 +10,24 @@ import matplotlib.pyplot as plt
 from scipy import interpolate
 from mpl_toolkits.mplot3d import Axes3D
 
-
+##################################
+########## init ##################
+##################################
+parser = argparse.ArgumentParser()
+parser.add_argument('-l', action="store", dest="x_left", default="",
+    help="input data for the left arm")
+parser.add_argument('-r', action="store", dest="x_right", default="",
+    help="input data for the left arm")
+args = parser.parse_args()
+poses = {'left': None, 'right':None}
+if args.arm == "left" or args.arm == "both":
+poses['left']=y.left.get_pose()
+if args.arm == "right" or args.arm == "both":
+    poses['right']=y.left.get_pose()
+# save pkl object
+parser.parse_args()
+with open(parser.args['filename'], "wb") as output_file:
+    pkl.dump(poses,output_file)
 data_x = np.loadtxt("C:/Users/Vishnunandan/.spyder-py3/Surgeme Exec/yumi_kinematics_feature_x.txt",dtype=float)
 data_y = np.loadtxt("C:/Users/Vishnunandan/.spyder-py3/Surgeme Exec/yumi_kinematics_feature_y.txt",dtype = float)
 
