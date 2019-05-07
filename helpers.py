@@ -5,9 +5,11 @@ import csv
 import ast
 import os
 from os.path import isfile, join
+from autolab_core import RigidTransform
+import pickle as pkl
 
 ################################
-# Data parser functions
+# Data parser functionj
 # inputs:
     # data_file: if its a file, just process that file.
           # in that directory
@@ -98,3 +100,26 @@ def parse_input_data(data_file, param_file, recursive=False, arm='left'):
                 output_row.append(int(task_params[-1]))
                 output.append(output_row)
     return np.array(output,dtype=float)
+
+# Loads a pose object from a file
+# inputs:
+    # pose_path: path to the .pkl file of the pose
+# output:
+    # the pose object
+def load_pose_by_path(pose_path):
+    with open(pose_path, 'rb') as file_name:
+        pose = pkl.load(file_name)
+        return pose
+
+# Loads a pose object from the pose description
+# inputs:
+    # arm: robot arm it accepts strings and only
+        # three options: 'left' , 'right' or 'both'
+    # peg: the peg number where the arm is located
+    # rot: the current rotation type of the pegboard.
+# output:
+    # the pose object
+def load_pose_by_desc(arm='left',peg=1,rot=1):
+    with open('./poses/'+arm+'_'+str(peg)+'_'+str(rot)+'_pose', 'rb') as file_name:
+        pose = pkl.load(file_name)
+        return pose

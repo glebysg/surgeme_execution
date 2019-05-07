@@ -20,14 +20,28 @@ def main():
     parser.add_argument('-s', action="store", dest="filename", default="pose",
             help="name of the pkl file where the object is recorded")
     args = parser.parse_args()
+
+    # Initialize Yumi
+    y=YuMiRobot(include_right=True, log_state_histories=True, log_pose_histories=True)
+
+    #setup the ool distance for the surgical grippers
+    # ORIGINAL GRIPPER TRANSFORM IS tcp2=RigidTransform(translation=[0, 0, 0.156], rotation=[[ 1. 0. 0.] [ 0. 1. 0.] [ 0. 0. 1.]])
+    DELTARIGHT=RigidTransform(translation=[0, 0, 0.205], rotation=[1, 0, 0, 0])
+    DELTALEFT=RigidTransform(translation=[0, 0, 0.205], rotation=[1, 0, 0, 0]) #old version version is 0.32
+    y.left.set_tool(DELTALEFT)
+    y.right.set_tool(DELTARIGHT)
+    y.set_v(40)
+    y.set_z('z100')
+
+    # Get Poses
     poses = {'left': None, 'right':None}
     if args.arm == "left" or args.arm == "both":
         poses['left']=y.left.get_pose()
     if args.arm == "right" or args.arm == "both":
-    	poses['right']=y.left.get_pose()
+    	poses['right']=y.right.get_pose()
+
     # save pkl object
-    parser.parse_args()
-    with open(parser.args['filename'], "wb") as output_file:
+    with open(args.filename, "wb") as output_file:
         pkl.dump(poses,output_file)
 
 if __name__ == '__main__':

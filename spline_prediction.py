@@ -9,4 +9,10 @@ data_y = np.loadtxt("./data/yumi_kinematics_feature_y.txt",dtype=np.float)
 s1 = data_x[84,4:7]
 target = pkl_file = open('pose.pkl', 'rb')
 
+# Load the data for the left arm
+
+# Filter it to surgeme 1
+
+# Rebase by target
+
 
