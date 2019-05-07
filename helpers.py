@@ -14,6 +14,7 @@ from os.path import isfile, join
     # param_file: task parameters path file
     # recursive: if True, process every subdirectory
                # inside the directory
+    # arm: the arm of the robot that will be processed.
 # output:
     # a n by m numpy array, where n is the sample number
     # and m is made of [tayectory_features, label,
@@ -29,7 +30,7 @@ from os.path import isfile, join
       # 8         12                     2         6
            # 7                                1
 
-def parse_input_data(data_file, param_file, recursive=False):
+def parse_input_data(data_file, param_file, recursive=False, arm='left'):
     output = []
     # Get the data in the params file
     with open(param_file) as csv_param:
@@ -42,17 +43,16 @@ def parse_input_data(data_file, param_file, recursive=False):
     elif recursive:
         for dir_name, _, _ in os.walk(data_file):
             dir_files = [f for f in os.listdir(dir_name) if isfile(join(dir_name, f))]
-            file_list = [join(dir_name,f) for f in dir_files if "kinematics" in f \
-                    and f.endswith(".txt")]
+            file_list += [join(dir_name,f) for f in dir_files if "kinematics" in f \
+                    and arm in f and f.endswith(".txt")]
     else:
         dir_files = [f for f in os.listdir(data_file) if isfile(join(data_file, f))]
         file_list = [join(data_file,f) for f in dir_files if  "kinematics" in f \
-                    and f.endswith(".txt")]
-
+                    and arm in f and f.endswith(".txt")]
+    file_list = sorted(file_list)
     for file_name in file_list:
         with open(file_name) as csv_data:
             data_reader = csv.reader(csv_data, delimiter=',')
-            output_row = []
             transfer_step_complete = False
             peg_index = 0
             # Filter out the param for the task
@@ -62,13 +62,12 @@ def parse_input_data(data_file, param_file, recursive=False):
                 subject,trial = first[0].split("_")
                 task_params = [p for p in  param_rows if \
                         p[0]==subject and p[1]==trial][0]
-                print task_params[3]
-                task_params[3] = ast.literal_eval(task_params[3])
-                print task_params[3]
+                task_params[3] = ast.literal_eval(str(task_params[3]))
                 break
             # reset csv so we can look at it from the begining
             csv_data.seek(0)
             for data_row in data_reader:
+                output_row = []
                 # if there is no label, skip reading
                 if data_row[22] == 'False':
                     continue
@@ -98,7 +97,4 @@ def parse_input_data(data_file, param_file, recursive=False):
                 output_row.append(peg_num)
                 output_row.append(int(task_params[-1]))
                 output.append(output_row)
-    return output
-
-
-print parse_input_data('./data/Yumi','./data/Yumi/new_task_params.csv',True)
+    return np.array(output,dtype=float)

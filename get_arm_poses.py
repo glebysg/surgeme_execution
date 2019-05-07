@@ -22,7 +22,7 @@ def main():
     args = parser.parse_args()
     poses = {'left': None, 'right':None}
     if args.arm == "left" or args.arm == "both":
-    poses['left']=y.left.get_pose()
+        poses['left']=y.left.get_pose()
     if args.arm == "right" or args.arm == "both":
     	poses['right']=y.left.get_pose()
     # save pkl object
