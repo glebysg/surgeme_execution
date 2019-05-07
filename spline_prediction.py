@@ -2,9 +2,9 @@ import numpy as np
 import csv
 import scipy
 import picke as pkl
+from helpers import parse_input_data
 
-data_x = np.loadtxt("./data/yumi_kinematics_feature_x.txt",dtype=np.float)
-data_y = np.loadtxt("./data/yumi_kinematics_feature_y.txt",dtype=np.float)
+parse_input_data()
 
 s1 = data_x[84,4:7]
 target = pkl_file = open('pose.pkl', 'rb')
@@ -14,5 +14,10 @@ target = pkl_file = open('pose.pkl', 'rb')
 # Filter it to surgeme 1
 
 # Rebase by target
+
+# Get splines (outputs)
+
+# Train
+
 
 

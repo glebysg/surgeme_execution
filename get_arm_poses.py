@@ -33,6 +33,7 @@ def main():
     y.set_v(40)
     y.set_z('z100')
 
+
     # Get Poses
     poses = {'left': None, 'right':None}
     if args.arm == "left" or args.arm == "both":
