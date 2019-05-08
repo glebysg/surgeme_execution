@@ -71,18 +71,21 @@ for elem in rebased_data:
         unique_pos[:,2]],s = 3)
     # Create a new data point
     # add start point
-    data_point = list(surgeme[0,:3])
+
+    data_row = []
+    data_row.extend(list(surgeme[0,:3]))
     # add target
-    data_point += pose_matrix[0][0][arm].translation
+    data_row.extend(pose_matrix[0][0][arm].translation)
     # add tck points
     knots, coeff, degree = tck
-    print "vector knots", knots
-    # add coeficients
-    print "coefficients", coeff
-    exit()
-
-
-# Get splines using two points (outputs)
+    # add the 12 coefficients that are going to be predicted
+    data_row.extend(list(np.array(coeff).reshape((12,))))
+    # EXTRA PLOTTING INFO
+    # add the spline knots
+    data_row.extend(list(knots))
+    # add the label, peg and rotation
+    data_row.extend(list(surgeme[0,3:]))
+    final_data.append(data_row)
 
 # Train
 
