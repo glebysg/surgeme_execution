@@ -19,7 +19,7 @@ import pickle as pkl
     # arm: the arm of the robot that will be processed.
 # output:
     # a n by m numpy array, where n is the sample number
-    # and m is made of [tayectory_features, label,
+    # and m is made of [tayectory_features (12), label,
     # target peg num, rotation type]
     # if the surgeme does not have a target peg/pole
     # (the case for get-together/exchagnge) the number

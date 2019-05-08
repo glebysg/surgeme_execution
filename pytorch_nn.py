@@ -35,9 +35,9 @@ def create_nn(batch_size=20, learning_rate=0.01, epochs=10,
 
     # Normalization and preprocessing hnto the dataset manager
     train_loader = torch.utils.data.DataLoader(train_tensor,
-        batch_size=batch_size, shuffle=True)
+        batch_size=batch_size, shuffle=True, drop_last=True)
     test_loader = torch.utils.data.DataLoader(test_tensor,
-        batch_size=batch_size, shuffle=True)
+        batch_size=batch_size, shuffle=True, drop_last=True)
 
     class Net(nn.Module):
         def __init__(self):
@@ -67,7 +67,6 @@ def create_nn(batch_size=20, learning_rate=0.01, epochs=10,
             data = data.view(-1, 13)
             optimizer.zero_grad()
             net_out = net(data)
-            print "TARGET:", target.view(20,1)
             loss = criterion(net_out, target.view(20,1))
             loss.backward()
             optimizer.step()
@@ -76,21 +75,21 @@ def create_nn(batch_size=20, learning_rate=0.01, epochs=10,
                     epoch, batch_idx * len(data), len(train_loader.dataset),
                            100. * batch_idx / len(train_loader), loss.data.item()))
 
-    # run a test loop
-    test_loss = 0
-    correct = 0
-    epsilon = 0.1
-    for data, target in test_loader:
-        data, target = Variable(data, requires_grad=False), Variable(target)
-        data = data.view(-1, 13)
-        net_out = net(data)
-        # sum up batch loss
-        print "TARGET:", target.view(20,1)
-        test_loss += criterion(net_out, target.view(20,1))
-        # if the difference is less than the threshold, consider it an acurate response.
-        # else, consider it a failed example
-        pred = 1 if abs(target.data.item()-net_out.data.item()) < epsilon else 0
-        correct += pred.eq(target.data).sum()
+        # run a test loop
+        test_loss = 0
+        correct = 0
+        epsilon = 0.1
+        for full_data  in test_loader:
+            data, target = Variable(full_data[:,0:13], requires_grad=False),\
+                    Variable(full_data[:,13])
+            data = data.view(-1, 13)
+            net_out = net(data)
+            # sum up batch loss
+            test_loss += criterion(net_out, target.view(20,1))
+            # if the difference is less than the threshold, consider it an acurate response.
+            # else, consider it a failed example
+            pred  = (abs(target.data.numpy() - net_out.data.numpy()) < epsilon).reshape((-1,1)).astype(int)
+            correct += float(sum(pred))
 
     test_loss /= len(test_loader.dataset)
     print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
