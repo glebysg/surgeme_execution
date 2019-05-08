@@ -43,7 +43,7 @@ def create_nn(batch_size=200, learning_rate=0.01, epochs=10,
             x = F.relu(self.fc1(x))
             x = F.relu(self.fc2(x))
             x = self.fc3(x)
-            return F.log_softmax(x)
+            return F.log_softmax(x, dim=0)
 
     net = Net()
     print(net)
@@ -67,17 +67,17 @@ def create_nn(batch_size=200, learning_rate=0.01, epochs=10,
             if batch_idx % log_interval == 0:
                 print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                     epoch, batch_idx * len(data), len(train_loader.dataset),
-                           100. * batch_idx / len(train_loader), loss.data[0]))
+                           100. * batch_idx / len(train_loader), loss.data.item()))
 
     # run a test loop
     test_loss = 0
     correct = 0
     for data, target in test_loader:
-        data, target = Variable(data, volatile=True), Variable(target)
+        data, target = Variable(data, requires_grad=False), Variable(target)
         data = data.view(-1, 28 * 28)
         net_out = net(data)
         # sum up batch loss
-        test_loss += criterion(net_out, target).data[0]
+        test_loss += criterion(net_out, target).data.item()
         pred = net_out.data.max(1)[1]  # get the index of the max log-probability
         correct += pred.eq(target.data).sum()
 
