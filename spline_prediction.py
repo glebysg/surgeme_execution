@@ -60,6 +60,7 @@ for elem in s1_data:
 
 #For each surgeme, get the splines (keep target peg, label and rotation)
 final_data = []
+rebased_index = 0
 for elem in rebased_data:
     surgeme = np.array(elem)
     surgeme_pos = surgeme[:,:3]
@@ -92,6 +93,7 @@ for elem in rebased_data:
     data_row.extend(list(knots))
     # add the label, peg and rotation
     data_row.extend(list(surgeme[0,3:]))
+    data_row.append(rebased_index)
     final_data.append(data_row)
 final_data = np.array(final_data)
 
