@@ -6,6 +6,13 @@ from helpers import parse_input_data, load_pose_by_desc
 import matplotlib.pyplot as plt
 from scipy import interpolate
 from mpl_toolkits.mplot3d import Axes3D
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+import torch
+from torch.autograd import Variable
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
 
 # Load the data for the left arm
 l_arm_data = parse_input_data("./data/Yumi/","./data/Yumi/task_params.csv",True,"left")
@@ -86,10 +93,53 @@ for elem in rebased_data:
     # add the label, peg and rotation
     data_row.extend(list(surgeme[0,3:]))
     final_data.append(data_row)
+final_data = np.array(final_data)
 
 # Train
+# get training and testing splits
+x_full = final_data[:,:6]
+y_full = final_data[:,6:18]
+x_train, x_test, y_train, y_test = train_test_split(
+    x_full, y_full, test_size=0.2, random_state=42)
+# y_train = y_train.reshape((-1,1))
+# y_test = y_test.reshape((-1,1))
+reg = LinearRegression().fit(x_train, y_train)
+print "REGRESSION SCORE", reg.score(x_train, y_train)
 
-# Test
 
+# TRY WITH A NN_REGRESSION
+class Net(nn.Module):
+    def __init__(self):
+        super(Net, self).__init__()
+        self.fc1 = nn.Linear(6,20)
+        self.fc2 = nn.Linear(20,20)
+        self.fc3 = nn.Linear(20,12)
+    def forward(self, x):
+        x = F.sigmoid(self.fc1(x))
+        x = F.sigmoid(self.fc2(x))
+        x = self.fc3(x)
+        return x
+net = Net()
+
+optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+criterion = nn.MSELoss()
+
+# Normalization and preprocessing here
+# Make the data into tensors
+train_tensor = torch.tensor(np.concatenate((x_train,y_train), axis=1)).float()
+test_tensor = torch.tensor(np.concatenate((x_test,y_test), axis=1)).float()
+
+for epoch in range(100):
+    for i, data2 in enumerate(train_tensor):
+        X=data2[0:6]
+        Y=data2[6:18]
+        X, Y = Variable(X, requires_grad=True), Variable(Y, requires_grad=False)
+        optimizer.zero_grad()
+        y_pred = net(X)
+        output = criterion(y_pred, Y)
+        output.backward()
+        optimizer.step()
+    if (epoch % 20 == 0.0):
+        print("Epoch {} - loss: {}".format(epoch, output))
 
 
