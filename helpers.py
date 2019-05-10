@@ -6,6 +6,7 @@ import ast
 import os
 from os.path import isfile, join
 from autolab_core import RigidTransform
+from scipy import interpolate
 import pickle as pkl
 
 ################################
@@ -123,3 +124,25 @@ def load_pose_by_desc(arm='left',peg=1,rot=1):
     with open('./poses/'+arm+'_'+str(peg)+'_'+str(rot)+'_pose', 'rb') as file_name:
         pose = pkl.load(file_name)
         return pose
+
+# given a 3d trajectory, returns the spline params
+# inputs:
+    # trayectory: nx3 array of points. each column
+    # a dimension.
+# output:
+    # the spline params tck and order see
+    # scipy.interpolate.BSpline for the exact
+    # parameter structure
+def get_spline(trajectory, s=3):
+    _,x_index = np.unique(trajectory[:,0],return_index = True)
+    _,y_index = np.unique(trajectory[:,1],return_index = True)
+    _,z_index = np.unique(trajectory[:,2],return_index = True)
+    xyz_index = np.concatenate((x_index,y_index,z_index),axis = None)
+    xyz_index = np.sort(np.unique(xyz_index))
+
+    unique_pos = trajectory[xyz_index]
+    tck, u = interpolate.splprep([
+        unique_pos[:,0],
+        unique_pos[:,1],
+        unique_pos[:,2]], s=s)
+    return tck, u
