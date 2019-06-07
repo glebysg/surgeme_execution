@@ -15,11 +15,17 @@ from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import pickle as pkl
+
+##########################
+###     PARAMS         ###
+##########################
 
 # Load the data for the left arm
+save_model = True
 l_arm_data = parse_input_data("./data/Yumi/","./data/Yumi/task_params.csv",True,"left")
 arm = "left"
-surgeme = 1
+surgeme_number = 3
 
 # Spline Params
 coeff_len = 6
@@ -30,7 +36,7 @@ spline_degree = 3
 NN = False# use NN or Regresion
 
 # Filter it to surgeme 1 that stats with the left arm pickup
-s1_data = l_arm_data[(l_arm_data[:,12]==surgeme)&(l_arm_data[:,13]<7)]
+s1_data = l_arm_data[(l_arm_data[:,12]==surgeme_number)&(l_arm_data[:,13]<7)]
 print s1_data.shape
 # Rebase by target
 # subtract the n peg by with rotation x with peg 2 with rotation 1 (base peg)
@@ -68,7 +74,7 @@ for elem in s1_data:
     prev_peg = elem_peg
     prev_rot = elem_rot
     first = False
-
+print(np.array(rebased_data).shape)
 #For each surgeme, get the splines (keep target peg, label and rotation)
 final_data = []
 rebased_index = 0
@@ -77,6 +83,9 @@ for elem in rebased_data:
     surgeme_pos = surgeme[:,:3]
     # get the Middle waypoitns from the spline
     way_points = get_waypoints(surgeme_pos)
+    if way_points is None:
+        rebased_index += 1
+        continue
     # Create a new data point
     data_row = []
     # INPUT DATA
@@ -106,7 +115,9 @@ x_train, x_test, y_train, y_test = train_test_split(
 # y_test = y_test.reshape((-1,1))
 reg = LinearRegression().fit(x_train, y_train[:,:coeff_len])
 print "REGRESSION SCORE", reg.score(x_train, y_train[:,:coeff_len])
-
+if save_model:
+    with open('models/S'+str(surgeme_number)+'_regression', 'wb') as model_name:
+        pkl.dump(reg,model_name)
 
 # TRY WITH A NN_REGRESSION
 class Net(nn.Module):
@@ -211,9 +222,8 @@ for data, target in zip(x_test,y_test):
     ax3d.plot(x_orig, y_orig, z_orig, 'b')
     ax3d.plot(x_target, y_target, z_target, 'r')
     ax3d.plot(x_pred, y_pred, z_pred, 'go')
-    plt.title(title)
-    # fig.show()
+    # plt.title(title)
     # plt.show()
-    plt.savefig('data/'+title+'.png')
+    plt.savefig('data/S'+str(surgeme_number)+"_"+title+'.png')
 # Print the DTW distance with the real trajectory and the target curve
 # [array([0., 0., 0., 0., 1., 1., 1., 1.]), [array([0.48237748, 0.47691105, 0.44821935, 0.44967256]), array([0.08779603, 0.10004131, 0.10692803, 0.10645012]), array([0.07841477, 0.05831569, 0.03754693, 0.01694974])], 3]
