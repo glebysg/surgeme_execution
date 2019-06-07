@@ -8,6 +8,9 @@ from os.path import isfile, join
 from autolab_core import RigidTransform
 from scipy import interpolate
 import pickle as pkl
+import matplotlib
+matplotlib.use('TkAgg')
+import matplotlib.pyplot as plt
 
 ################################
 # Data parser functionj
@@ -146,3 +149,43 @@ def get_spline(trajectory, s=3):
         unique_pos[:,1],
         unique_pos[:,2]], s=s)
     return tck, u
+
+def get_waypoints(trajectory, s=3):
+    _,x_index = np.unique(trajectory[:,0],return_index = True)
+    _,y_index = np.unique(trajectory[:,1],return_index = True)
+    _,z_index = np.unique(trajectory[:,2],return_index = True)
+    xyz_index = np.concatenate((x_index,y_index,z_index),axis = None)
+    xyz_index = np.sort(np.unique(xyz_index))
+
+    unique_pos = trajectory[xyz_index]
+    tck, u = interpolate.splprep([
+        unique_pos[:,0],
+        unique_pos[:,1],
+        unique_pos[:,2]], s=s)
+
+    num_t = 30
+    t_points = np.linspace(0,1,num_t)
+    x_pred, y_pred, z_pred = interpolate.splev(t_points, tck)
+    # Add the initial point to the spline
+    # Add midway knowt points to the spline
+    t_step = num_t/s
+    way_points = []
+    for i in range(1,s):
+        way_points.append(x_pred[i*t_step])
+        way_points.append(y_pred[i*t_step])
+        way_points.append(z_pred[i*t_step])
+    # x_3.append(unique_pos[-1,0])
+    # y_3.append(unique_pos[-1,1])
+    # z_3.append(unique_pos[-1,2])
+    # tck_3, u_3 = interpolate.splprep([x_3,y_3,z_3 ], s=s)
+    # x_pred_3, y_pred_3, z_pred_3 = interpolate.splev(t_points, tck_3)
+
+    # fig = plt.figure(2)
+    # ax3d = fig.add_subplot(111, projection='3d')
+    # ax3d.plot(unique_pos[:,0], unique_pos[:,1],  unique_pos[:,2], 'b')
+    # ax3d.plot(x_pred, y_pred, z_pred, 'r')
+    # ax3d.plot(x_pred_3, y_pred_3, z_pred_3, 'g')
+    # ax3d.scatter(x_3, y_3, z_3, 'go')
+    # fig.show()
+    # plt.show()
+    return way_points
