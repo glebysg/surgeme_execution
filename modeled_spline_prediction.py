@@ -22,12 +22,12 @@ arm = "left"
 surgeme = 1
 
 # Spline Params
-coeff_len = 12
+coeff_len = 6
 knot_len = 8
 spline_degree = 3
 
 # Test params
-NN = False # use NN or Regresion
+NN = False# use NN or Regresion
 
 # Filter it to surgeme 1 that stats with the left arm pickup
 s1_data = l_arm_data[(l_arm_data[:,12]==surgeme)&(l_arm_data[:,13]<7)]
@@ -75,23 +75,19 @@ rebased_index = 0
 for elem in rebased_data:
     surgeme = np.array(elem)
     surgeme_pos = surgeme[:,:3]
-    # Eliminate the points that are repeated, since the interpolation
-    # that estimates the spline does not accept them
-    tck, u = get_spline(surgeme_pos)
+    # get the Middle waypoitns from the spline
+    way_points = get_waypoints(surgeme_pos)
     # Create a new data point
-    # add start point
-
     data_row = []
+    # INPUT DATA
+    # add start point
     data_row.extend(list(surgeme[0,:3]))
     # add target
     data_row.extend(list(surgeme[-1,:3]))
-    # add tck points
-    knots, coeff, degree = tck
-    # add the 12 coefficients that are going to be predicted
-    data_row.extend(list(np.array(coeff).reshape((12,))))
+    # OUTPUT DATA
+    # add the 2 waypoints to be predicted (6 numbers, 2 3D points)
+    data_row.extend(way_points)
     # EXTRA PLOTTING INFO
-    # add the spline knots
-    data_row.extend(list(knots))
     # add the label, peg and rotation
     data_row.extend(list(surgeme[0,3:]))
     # add the index of the original data
@@ -108,19 +104,17 @@ x_train, x_test, y_train, y_test = train_test_split(
     x_full, y_full, test_size=0.2, random_state=42)
 # y_train = y_train.reshape((-1,1))
 # y_test = y_test.reshape((-1,1))
-reg1 = LinearRegression().fit(x_train, y_train[:,:6])
-reg2 = LinearRegression().fit(x_train, y_train[:,6:12])
-print "REGRESSION1 SCORE", reg1.score(x_train, y_train[:,:6])
-print "REGRESSION2 SCORE", reg2.score(x_train, y_train[:,6:12])
+reg = LinearRegression().fit(x_train, y_train[:,:coeff_len])
+print "REGRESSION SCORE", reg.score(x_train, y_train[:,:coeff_len])
 
 
 # TRY WITH A NN_REGRESSION
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.fc1 = nn.Linear(6,20)
-        self.fc2 = nn.Linear(20,20)
-        self.fc3 = nn.Linear(20,coeff_len)
+        self.fc1 = nn.Linear(6,15)
+        self.fc2 = nn.Linear(15,15)
+        self.fc3 = nn.Linear(15,coeff_len)
     def forward(self, x):
         x = torch.sigmoid(self.fc1(x))
         x = torch.sigmoid(self.fc2(x))
@@ -154,7 +148,11 @@ for epoch in range(40):
 ###############################################################
 # for each element in the testing
 # plot the real curve, the target curve and the predicted curve
+count = 1
 for data, target in zip(x_test,y_test):
+    title = "NN" if NN else "LR"
+    title += " sample " + str(count)
+    count += 1
     # data = [surgeme start, surgeme target]
     # target = [spline coefficients,spline_knots,peg,rotation,label,rebased_index]
 
@@ -167,47 +165,55 @@ for data, target in zip(x_test,y_test):
     z_orig = orig_data[:,2]
 
     # Get the target spline
-    coeff = target[:coeff_len]
-    coeff_step = coeff_len/spline_degree
-    target_knots = np.array(target[coeff_len:-4])
-    target_coeffs = []
-    for i in range(0,coeff_len,coeff_step):
-        coeff_set = target[i:i+coeff_step]
-        target_coeffs.append(np.array(coeff_set))
-    target_tck = (target_knots, target_coeffs, spline_degree)
     t_points = np.linspace(0,1,30)
+    target_tck, target_u = get_spline(orig_data)
     x_target, y_target, z_target = interpolate.splev(t_points, target_tck)
 
     # Get the predicted spline
     if NN:
         tensor_data= torch.tensor(data).float()
-        tensor_target= torch.tensor(coeff).float()
+        tensor_target= torch.tensor(target[:coeff_len]).float()
         X, Y = Variable(tensor_data, requires_grad=False), Variable(tensor_target, requires_grad=False)
-        y_pred = net(X)
-        loss = criterion(y_pred, Y)
-        y_pred = net(X).data.numpy()
+        pred_waypoints = net(X)
+        loss = criterion(pred_waypoints, Y)
+        pred_waypoints = net(X).data.numpy()
         print "MSE", loss
     else:
         print data
-        y1_pred = reg1.predict(data.reshape(1,-1))
-        y2_pred = reg2.predict(data.reshape(1,-1))
-        y_pred = y1_pred[0] + y2_pred[0]
-        print "PREDICTON", y_pred
+        pred_waypoints = reg.predict(data.reshape(1,-1))
+        print "PREDICTON", pred_waypoints
 
-    pred_coeffs = []
-    for i in range(0,coeff_len,coeff_step):
-        coeff_set = y_pred[i:i+coeff_step]
-        pred_coeffs.append(np.array(coeff_set))
-    pred_tck = (target_knots, pred_coeffs, spline_degree)
+    # Get the predicted spline
+    # add the initial point
+    x_way = []
+    y_way = []
+    z_way = []
+    x_way.append(orig_data[0,0])
+    y_way.append(orig_data[0,1])
+    z_way.append(orig_data[0,2])
+    # add the waypoints
+    pred_waypoints = pred_waypoints.reshape(6)
+    for i in range(coeff_len/3):
+        x_way.append(pred_waypoints[i*3])
+        y_way.append(pred_waypoints[i*3 +1])
+        z_way.append(pred_waypoints[i*3 +2])
+    # add the endpoint
+    x_way.append(orig_data[-1,0])
+    y_way.append(orig_data[-1,1])
+    z_way.append(orig_data[-1,2])
+    # get the spline
     t_points = np.linspace(0,1,30)
-    x_pred, y_pred, z_pred = interpolate.splev(t_points, pred_tck)
+    tck_way, u_way = interpolate.splprep([x_way,y_way,z_way ], s=spline_degree)
+    x_pred, y_pred, z_pred = interpolate.splev(t_points, tck_way)
 
     fig = plt.figure(2)
     ax3d = fig.add_subplot(111, projection='3d')
     ax3d.plot(x_orig, y_orig, z_orig, 'b')
     ax3d.plot(x_target, y_target, z_target, 'r')
     ax3d.plot(x_pred, y_pred, z_pred, 'go')
-    fig.show()
-    plt.show()
+    plt.title(title)
+    # fig.show()
+    # plt.show()
+    plt.savefig('data/'+title+'.png')
 # Print the DTW distance with the real trajectory and the target curve
 # [array([0., 0., 0., 0., 1., 1., 1., 1.]), [array([0.48237748, 0.47691105, 0.44821935, 0.44967256]), array([0.08779603, 0.10004131, 0.10692803, 0.10645012]), array([0.07841477, 0.05831569, 0.03754693, 0.01694974])], 3]
