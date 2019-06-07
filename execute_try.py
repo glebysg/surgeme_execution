@@ -57,10 +57,8 @@ init_pose_right=y.right.get_pose()
 # init_pose_left.translation = [0.3968,0.06525,-0.04631]
 # init_pose_right.translation = [0.3969,0.06525,-0.0788]
 # Go to the initial possition
-print "where we are: ", init_pose_left.translation
 y.left.goto_pose(init_pose_left,False,True,False)
 predicted_points = np.loadtxt('final_output_predicted_left.txt', delimiter=',')
-print "where we wanna go: ", predicted_points[0,:3]
 go_to_poses = []
 for point in predicted_points:
 	target_pose = copy.deepcopy(init_pose_left)

@@ -203,7 +203,7 @@ for data, target in zip(x_test,y_test):
     y_way.append(orig_data[0,1])
     z_way.append(orig_data[0,2])
     # add the waypoints
-    pred_waypoints = pred_waypoints.reshape(6)
+    pred_waypoints = pred_waypoints.reshape(coeff_len)
     for i in range(coeff_len/3):
         x_way.append(pred_waypoints[i*3])
         y_way.append(pred_waypoints[i*3 +1])
