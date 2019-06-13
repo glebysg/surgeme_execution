@@ -30,7 +30,7 @@ import matplotlib.pyplot as plt
     # will be filled with zero.
     #################################################
     # Peg numbers are annotated like this (For Yumi):
-    # (Human Left)                     (Human Right)
+    # (Human Left/Robot Right)    (Human Right/Robot Left)
           # 10                               4
       # 9         11                     3         5
       # 8         12                     2         6
