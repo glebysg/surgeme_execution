@@ -15,6 +15,7 @@ from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+from scipy.spatial.distance import euclidean
 
 # Load the data for the left arm
 l_arm_data = parse_input_data("./data/Yumi/","./data/Yumi/task_params.csv",True,"left")
@@ -154,6 +155,7 @@ for epoch in range(40):
 ###############################################################
 # for each element in the testing
 # plot the real curve, the target curve and the predicted curve
+dtw_measurements = []
 for data, target in zip(x_test,y_test):
     # data = [surgeme start, surgeme target]
     # target = [spline coefficients,spline_knots,peg,rotation,label,rebased_index]
@@ -202,6 +204,14 @@ for data, target in zip(x_test,y_test):
     t_points = np.linspace(0,1,30)
     x_pred, y_pred, z_pred = interpolate.splev(t_points, pred_tck)
 
+    ##########################################
+    ########### get the DTW distance #########
+    ##########################################
+    target_curve = zip(x_target,y_target,z_target)
+    predicted_curve = zip(x_pred,y_pred,z_pred)
+    dtw_dist, _ = fastdtw(target_curve, predicted_curve, dist=euclidean)
+    dtw_measurements.append(dtw_dist)
+
     fig = plt.figure(2)
     ax3d = fig.add_subplot(111, projection='3d')
     ax3d.plot(x_orig, y_orig, z_orig, 'b')
@@ -209,5 +219,6 @@ for data, target in zip(x_test,y_test):
     ax3d.plot(x_pred, y_pred, z_pred, 'go')
     fig.show()
     plt.show()
+print("DTW MEAN:", np.mean(dtw_measurements), "DTW STD", np.std(dtw_measurements))
 # Print the DTW distance with the real trajectory and the target curve
 # [array([0., 0., 0., 0., 1., 1., 1., 1.]), [array([0.48237748, 0.47691105, 0.44821935, 0.44967256]), array([0.08779603, 0.10004131, 0.10692803, 0.10645012]), array([0.07841477, 0.05831569, 0.03754693, 0.01694974])], 3]
