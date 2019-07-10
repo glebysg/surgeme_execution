@@ -57,7 +57,7 @@ def main():
     	poses['right']=y.right.get_pose()
     print poses
 
-    filename="poses_%s_%s" %(args.arm,args.point_id)
+    filename="data/homography/poses_%s_%s" %(args.arm,args.point_id)
 
     # save pkl object
     with open(filename, "wb") as output_file:

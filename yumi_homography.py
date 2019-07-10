@@ -50,8 +50,8 @@ def main():
     # the pickle files are saved with the script yumi_calibration_poses.py
 
     for i in range(12):
-        arm_pose_left = pkl.load( open( "poses_left_%s" % str(i+1), "rb" ) )
-        arm_pose_right = pkl.load( open( "poses_right_%s" % str(i+1), "rb" ) )
+        arm_pose_left = pkl.load( open( "data/homography/poses_left_%s" % str(i+1), "rb" ) )
+        arm_pose_right = pkl.load( open( "data/homography/poses_right_%s" % str(i+1), "rb" ) )
         pose_left.append(arm_pose_left['left'].translation)
         pose_right.append(arm_pose_right["right"].translation)
 
