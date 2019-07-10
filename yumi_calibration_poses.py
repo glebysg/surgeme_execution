@@ -12,6 +12,13 @@ import IPython
 import argparse
 import pickle as pkl
 
+'''
+    THIS FILE SAVED THE POSES OF THE YUMI ARM
+    USE YUMI ROBOT IN MODE LEAD-THROUGH TO MOVE THE ARM TO THE POINT YOU WISH TO MEASURE
+    THEN (WHILE SERVER IS RUNNING) RUN THIS SCVRIPT WITH PARAMETERS ARM AND POINT NUMBER
+    THE SCRIPT WILL SAVE THE FILE "poses_%s_%s (arm, point_id)
+
+'''
 
 def main():
     # parse arguments

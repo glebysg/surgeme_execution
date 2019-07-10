@@ -14,6 +14,17 @@ import argparse
 import pickle as pkl
 import math
 
+'''
+    ALL DIMENSIONS ARE IN METERS
+    THE FOLLOWING SCRIPT CERATED THE HOMOGRAPHY BETWEEN 12 POINTS IN THE WORLD COORDINATES MEASURED BY HAND
+    AND 12 POINTS FROM EACH ROBOT ARM SAVED IN PICKLE FILES
+
+    FIRST SAVE THE 12 POINTS FOR EACH YUMI ARM USING THE FILE  yumi_calibration_poses.py
+    
+
+'''
+
+
 def main():
     global M_left
     global M_right
@@ -37,7 +48,7 @@ def main():
 
     # Creates the vector of yumi poses for both arms using the saved pickle files
     # the pickle files are saved with the script yumi_calibration_poses.py
-    
+
     for i in range(12):
         arm_pose_left = pkl.load( open( "poses_left_%s" % str(i+1), "rb" ) )
         arm_pose_right = pkl.load( open( "poses_right_%s" % str(i+1), "rb" ) )
