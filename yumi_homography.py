@@ -70,14 +70,38 @@ def main():
     M_left=affine_matrix_from_points(pose_left, world_points, scale=False, usesvd=True)
     M_right=affine_matrix_from_points(pose_right, world_points, scale=False, usesvd=True)
 
+    l_L1_difference_yumi_to_world=[]
+    l_L1_difference_world_to_yumi=[]
+    r_L1_difference_yumi_to_world=[]
+    r_L1_difference_world_to_yumi=[]
     point=1
     output=yumi_to_world(pose_left,"left")
-    print "estimated world coordinates",output[:,point]
-    print "real world coordinates",world_points[:,point]
-
     output2=world_to_yumi(world_points,"left")
-    print "estimated yumi coordinates", output2[:,point]
-    print "real yumi coordinates",pose_left[:,point]
+    output3=yumi_to_world(pose_right,"right")
+    output4=world_to_yumi(world_points,"right")
+
+    a,b=output.shape
+
+    for i in range(b):
+    	l_L1_difference_yumi_to_world.append(numpy.linalg.norm((output[:,i] - world_points[:,i]), ord=1))
+    	l_L1_difference_world_to_yumi.append(numpy.linalg.norm((output2[:,i] - pose_left[:,i]), ord=1))
+    	r_L1_difference_yumi_to_world.append(numpy.linalg.norm((output3[:,i] - world_points[:,i]), ord=1))
+    	r_L1_difference_world_to_yumi.append(numpy.linalg.norm((output4[:,i] - pose_right[:,i]), ord=1))
+
+    # print "LEFT L1 error yumi to world in mm",np.array(l_L1_difference_yumi_to_world)*1000
+    print "LEFT MEAN L1 error yumi to world in mm ------->",np.mean(np.array(l_L1_difference_yumi_to_world)*1000,axis=0)
+    # print "LEFT L1 error world to yumi mm",np.array(l_L1_difference_world_to_yumi)*1000
+    print "LEFT MEAN L1 error world to yumi in mm ------>",np.mean(np.array(l_L1_difference_world_to_yumi)*1000,axis=0)
+
+    # print "RIGHT L1 error yumi to world in mm",np.array(r_L1_difference_yumi_to_world)*1000
+    print "RIGHT MEAN L1 error yumi to world in mm ------->",np.mean(np.array(r_L1_difference_yumi_to_world)*1000,axis=0)
+    # print "RIGHT L1 error world to yumi mm",np.array(r_L1_difference_world_to_yumi)*1000
+    print "RIGHT MEAN L1 error world to yumi in mm ------>",np.mean(np.array(r_L1_difference_world_to_yumi)*1000,axis=0)
+
+    # print "estimated world coordinates LEFT",output[:,:]
+    # print "real world coordinates LEFT",world_points[:,:]
+    # print "estimated yumi coordinates LEFT", output2[:,:]
+    # print "real yumi coordinates LEFT",pose_left[:,:]
 
 def yumi_to_world(vector,yumi_arm):
     # vector (ndim,*/) in yumi coordinates m
