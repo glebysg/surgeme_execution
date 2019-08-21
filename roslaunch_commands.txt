@@ -1,0 +1,3 @@
+cd ~/realsense_ws
+roslaunch realsense2_camera rs_camera.launch
+roslaunch darknet_ros darknet_ros.launch

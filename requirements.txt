@@ -44,3 +44,5 @@ torch==1.1.0
 torchvision==0.2.2.post3
 traitlets==4.3.2
 wcwidth==0.1.7
+pyrealsense2
+opencv-contrib-python

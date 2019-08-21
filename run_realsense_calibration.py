@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt           # 2D plotting library producing public
 from os.path import join
 from glob import glob
 import pickle
+from pprint import pprint as pp
 
 # Configure depth and color streams
 pipeline = rs.pipeline()
@@ -19,10 +20,10 @@ config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
 config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
 
 # Start streaming
-pipeline.start(config)
+save_img=True
+pipe_profile = pipeline.start(config)
 count = 0
 img_path ='realsense_calibration'
-save_img=False
 try:
     #########################
     #     DATA COLLECTION   #
@@ -43,7 +44,25 @@ try:
 
         # Update color and depth frames:
         aligned_depth_frame =  frames.get_depth_frame()
+        # Intrinsics & Extrinsics
+        depth_intrin = depth_frame.profile.as_video_stream_profile().intrinsics
+        color_intrin = color_frame.profile.as_video_stream_profile().intrinsics
+        depth_to_color_extrin = depth_frame.profile.get_extrinsics_to(color_frame.profile)
+        # Depth scale - units of the values inside a depth frame, i.e how to convert the value to units of 1 meter
+        depth_sensor = pipe_profile.get_device().first_depth_sensor()
+        depth_scale = depth_sensor.get_depth_scale()
+        depth_pixel = [300, 300]   # Random pixel
+        depth_point = rs.rs2_deproject_pixel_to_point(depth_intrin, depth_pixel, depth_scale)
+        pixel_point = rs.rs2_project_point_to_pixel(depth_intrin, )
+        print(depth_point)
+
+
         aligned_depth_data =  np.asanyarray(aligned_depth_frame.get_data())
+        # Get point cloud of from de depth frame
+        # pc = rs.pointcloud()
+        # # pc.map_to(color_frame)
+        # point_cloud = pc.calculate(aligned_depth_frame)
+        # vtx = np.asanyarray(points.get_vertices())
         # Apply colormap on depth image (image must be converted to 8-bit per pixel first)
 
         depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(aligned_depth_data, alpha=0.03), cv2.COLORMAP_JET)
@@ -75,7 +94,6 @@ try:
         elif ord('q') == keypress:
             break
 finally:
-
     # Stop streaming
     pipeline.stop()
 
@@ -98,12 +116,16 @@ for iname, dname in zip(images, depth):
     # Arrays to store object points and image points from all the images.
     # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
     # We start with the bottom floor
-    objp = np.zeros((x_grid*y_grid,3), np.float32)
+    objp = np.zeros((y_grid,x_grid,3), np.float32)
+    for i in range(y_grid):
+        for j in range(x_grid):
+            objp[i,j,1] = i*2
+            objp[i,j,0] = j*2
     # Divide all the points by 100 so they are in meters
-    objp[:,:2] = ((np.mgrid[0:x_grid,0:y_grid]*2).T.reshape(-1,2))/100
+    objp = objp/100.0
     # add the height to the second image
     if "_1" in iname:
-        objp[:,2] = np.ones((x_grid*y_grid))*-0.0334
+        objp[:,:,2] = np.ones((y_grid,x_grid))*-0.0334
     # get the color image
     img = cv2.imread(iname)
     img = cv2.convertScaleAbs(img, alpha=1.5, beta=0)
@@ -126,8 +148,8 @@ for iname, dname in zip(images, depth):
         corners_3d = []
         for i in range(len(list_corners)):
             # for each pixel value find the z value and add it
-            x,y= list_corners[i][0]
-            z_dist = depth[int(y),int(x)]
+            col,row= list_corners[i][0]
+            z_dist = depth[int(row),int(col)]
             corners_3d.append([list_corners[i][0]+[z_dist]])
         imgpoints.append(np.array(corners_3d))
 
@@ -135,11 +157,19 @@ for iname, dname in zip(images, depth):
         img = cv2.drawChessboardCorners(img, (x_grid,y_grid), corners2,ret)
         cv2.imshow('img',img)
         cv2.waitKey(0)
-
+# test camera calibration
+imgpoints = np.array(imgpoints)
 # create the homography
 imgpoints = np.array(imgpoints,dtype='float32').reshape(-1,1,3)
-objpoints= np.array(imgpoints,dtype='float32').reshape(-1,1,3)
-H, mask = cv2.findHomography(imgpoints, objpoints, cv2.RANSAC)
+objpoints= np.array(objpoints,dtype='float32').reshape(-1,1,3)
+for source, dest in zip(imgpoints,objpoints):
+    print("image :", source)
+    print("object:", dest)
+    print("//////////////")
+H, mask = cv2.findHomography(imgpoints, objpoints, cv2.RANSAC )
+# Save homography
+np.savetxt(join(img_path,"homography.txt"),H)
+
 
 # Determine error
 error = []

@@ -18,12 +18,17 @@ config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
 
 # Start streaming
 pipeline.start(config)
+record = True
+color_record_path = 'data/videos/tool_2.avi'
+depth_record_path = 'data/videos/tool22.avi'
 
+color_out = cv2.VideoWriter(color_record_path,cv2.VideoWriter_fourcc('M','J','P','G'), 30, (640,480)) if record else None
+depth_out = cv2.VideoWriter(depth_record_path,cv2.VideoWriter_fourcc('M','J','P','G'), 30, (640,480)) if record else None
 
 count = 0
 try:
     while True:
-
+        # check if the cap is open
         # Wait for a coherent pair of frames: depth and color
         frameset = pipeline.wait_for_frames()
         # Store color and depth in frameset to align
@@ -41,11 +46,18 @@ try:
         aligned_depth_frame =  np.asanyarray(frameset.get_depth_frame().get_data())
         # Apply colormap on depth image (image must be converted to 8-bit per pixel first)
 
-        depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(aligned_depth_frame, alpha=0.03), cv2.COLORMAP_JET)
+        # reduce brightness
+        depth_grayscale =cv2.convertScaleAbs(aligned_depth_frame, alpha=0.05)
+        depth_colormap = cv2.applyColorMap(depth_grayscale, cv2.COLORMAP_JET)
+        depth_grayscale = cv2.cvtColor(depth_grayscale, cv2.COLOR_GRAY2RGB)
         color_frame = np.asanyarray(color_frame.get_data())
+        print("DISTANCE:",frameset.get_depth_frame().get_distance(300,200))
 
         # Stack both images horizontally
-        images = np.hstack((color_frame, depth_colormap))
+        images = np.hstack((color_frame, depth_grayscale))
+        if record:
+            color_out.write(color_frame)
+            depth_out.write(depth_grayscale)
 
         # Show images
         cv2.namedWindow('RealSense', cv2.WINDOW_AUTOSIZE)
@@ -55,4 +67,8 @@ try:
 finally:
 
     # Stop streaming
+    cv2.destroyAllWindows()
     pipeline.stop()
+    if record:
+        color_out.release()
+        depth_out.release()

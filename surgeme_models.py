@@ -6,7 +6,7 @@ import numpy as np
 import copy
 import sys
 import random
-
+from darknet_ros_msgs.msg import BoundingBoxes
 from autolab_core import RigidTransform
 from yumipy import YuMiConstants as YMC
 from yumipy import YuMiRobot, YuMiState

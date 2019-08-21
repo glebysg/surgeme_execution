@@ -35,6 +35,12 @@ import matplotlib.pyplot as plt
       # 9         11                     3         5
       # 8         12                     2         6
            # 7                                1
+H = np.loadtxt("./realsense_calibration/homography.txt")
+def camera_to_world(point):
+    global H
+    point = np.array(point)
+    estimated_dest = np.dot(H,point)
+    return estimated_dest
 
 def parse_input_data(data_file, param_file, recursive=False, arm='left'):
     output = []
