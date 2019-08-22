@@ -199,3 +199,9 @@ def get_waypoints(trajectory, s=3):
     # fig.show()
     # plt.show()
     return way_points
+
+def get_closest_cloud_point(pixels, target):
+    distances = list(map((lambda x: np.linalg.norm(x-target)), pixels))
+    return np.argmin(distances)
+
+

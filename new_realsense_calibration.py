@@ -4,7 +4,8 @@
 ###############################################
 ##      Open CV and Numpy integration        ##
 ###############################################
-import pyrealsense2 as rs
+# import pyrealsense2 as rs
+from scipy import spatial
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt           # 2D plotting library producing publication quality figures
@@ -12,30 +13,38 @@ from os.path import join
 from glob import glob
 import pickle
 from pprint import pprint as pp
+from helpers import get_closest_cloud_point
 
 # Configure depth and color streams
-img_path ='/home/isat/realsense_ws/src/surgeme_exec/data'
+calib_path ='./ros/'
 
-
-        
 
 #########################
 #     CALIBRATION       #
 #########################
+
+# PARAMETERS
 # termination criteria
 criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 x_grid = 9
 y_grid = 6
-images = glob(join(img_path,'*.jpg'))
-cloud = glob(join(img_path,'*.npy'))
+images = glob(join(calib_path,'*.jpg'))
+cloud = glob(join(calib_path,'*.npy'))
 images.sort()
 cloud.sort()
 objpoints = [] # 3d point in real world space
 cloudpoints = [] # 3d cloud points.
-cloud = np.load(cloud[0])
-print(cloud[10000:10050])
 
+images = [images[1]]
+cloud = [cloud[1]]
+print(cloud)
+
+# PARAMETERS
 for iname, cname in zip(images, cloud):
+    # load the cloud
+    cloudp = np.load(cname)
+    cloudp_pixels = cloudp[:,3:]
+    cloudp = cloudp[:,:3]
     # Arrays to store object points and image points from all the images.
     # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
     # We start with the bottom floor
@@ -63,40 +72,44 @@ for iname, cname in zip(images, cloud):
 
     # If found, add object points, image points (after refining them)
     if ret == True:
+        print("ASDFASDFASDFASDFADSFASD")
         objpoints.append(objp)
 
         corners2 = cv2.cornerSubPix(gray,corners,(11,11),(-1,-1),criteria)
         list_corners = corners2.tolist()
         corners_3d = []
         for i in range(len(list_corners)):
-            # for each pixel value find the z value and add it
-            cloud_point = find_cloud_point()
-            col,row= list_corners[i][0]
-            z_dist = cloud[int(row),int(col)]
-            corners_3d.append([list_corners[i][0]+[z_dist]])
-        imgpoints.append(np.array(corners_3d))
+            # get pixel
+            pixel_img = np.array(list_corners[i][0])
+            # for each pixel value find the closest cloud pixel value
+            p_index = get_closest_cloud_point(cloudp_pixels, pixel_img)
+            cloud_point = cloudp[p_index]
+            print(cloud_point)
+            corners_3d.append(cloud_point)
+        cloudpoints.append(np.array(corners_3d))
 
         # Draw and display the corners
         img = cv2.drawChessboardCorners(img, (x_grid,y_grid), corners2,ret)
         cv2.imshow('img',img)
         cv2.waitKey(0)
 # test camera calibration
-# imgpoints = np.array(imgpoints)
-# # create the homography
-# imgpoints = np.array(imgpoints,dtype='float32').reshape(-1,1,3)
-# objpoints= np.array(objpoints,dtype='float32').reshape(-1,1,3)
-# for source, dest in zip(imgpoints,objpoints):
-#     print("image :", source)
-#     print("object:", dest)
-#     print("//////////////")
-# H, mask = cv2.findHomography(imgpoints, objpoints, cv2.RANSAC )
-# # Save homography
-# np.savetxt(join(img_path,"homography.txt"),H)
+cloudpoints = np.array(cloudpoints)
+# create the homography
+cloudpoints = np.array(cloudpoints,dtype='float32').reshape(-1,1,3)
+objpoints= np.array(objpoints,dtype='float32').reshape(-1,1,3)
+for source, dest in zip(cloudpoints,objpoints):
+    print("image :", source)
+    print("object:", dest)
+    print("//////////////")
+H, mask = cv2.findHomography(cloudpoints, objpoints, cv2.RANSAC )
+# Save homography
+np.savetxt(join(calib_path,"homography.txt"),H)
 
 
-# # Determine error
-# error = []
-# for source, dest in zip(imgpoints,objpoints):
-#     estimated_dest = np.dot(H,source[0])
-#     error.append(np.linalg.norm(dest-estimated_dest))
-# print("AVERAGE EUCLIDEAN ERROR IN METERS:", np.mean(error))
+# Determine error
+
+error = []
+for source, dest in zip(cloudpoints,objpoints):
+    estimated_dest = np.dot(H,source[0])
+    error.append(np.linalg.norm(dest-estimated_dest))
+print("AVERAGE EUCLIDEAN ERROR IN METERS:", np.mean(error))
