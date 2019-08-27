@@ -28,26 +28,30 @@ def main():
     global M_right
 
     world_points=np.array([[0,0,0],
-            [0.08,0,0],
-            [0.16,0,0],
-            [0,0.10,0],
-            [0.08,0.10,0],
-            [0.16,0.10,0],
-            [0,0,-0.0334],
-            [0.08,0,-0.0334],
-            [0.16,0,-0.0334],
-            [0,0.10,-0.0334],
-            [0.08,0.10,-0.0334],
-            [0.16,0.10,-0.0334]])
+            [0.096,0,0],
+            [0.192,0,0],
+            [0,0.12,0],
+            [0.096,0.12,0],
+            [0.192,0.12,0],
+            [0,0,-0.04008],
+            [0.096,0,-0.04008],
+            [0.192,0,-0.04008],
+            [0,0.12,-0.04008],
+            [0.096,0.12,-0.04008],
+            [0.192,0.12,-0.04008],
+            [0.048,0.048,0],
+            [0.144,0.072,0],
+            [0.048,0.072,-0.04008],
+            [0.144,0.024,-0.04008]])
     world_points=np.transpose(world_points)
-
+    print("length",len(world_points))
     pose_left=[]
     pose_right=[]
 
     # Creates the vector of yumi poses for both arms using the saved pickle files
     # the pickle files are saved with the script yumi_calibration_poses.py
 
-    for i in range(12):
+    for i in range(16):
         arm_pose_left = pkl.load(open("data/homography/poses_left_%s" % str(i+1), "rb" ) )
         arm_pose_right = pkl.load(open("data/homography/poses_right_%s" % str(i+1), "rb" ) )
         pose_left.append(arm_pose_left['left'].translation)

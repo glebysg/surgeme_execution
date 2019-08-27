@@ -28,7 +28,7 @@ def world_to_yumi(vector,yumi_arm):
     # output is (ndim */)
     #returns the coordinates in the yumi coordinate system
     # each column is one data point
-    with open("yumi_homography", 'rb') as fopen:
+    with open("yumi_homography.pkl", 'rb') as fopen:
     	saved_model = pickle.load(fopen)
 
 	M_left=saved_model['M_left']
