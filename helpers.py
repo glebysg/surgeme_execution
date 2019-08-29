@@ -204,4 +204,36 @@ def get_closest_cloud_point(pixels, target):
     distances = list(map((lambda x: np.linalg.norm(x-target)), pixels))
     return np.argmin(distances)
 
+def get_3dpt_depth(pixel, depth, k):
+    cx = k[0,2]
+    cy = k[1,2]
+    fx = k[0,0]
+    fy = k[1,1]
+    u = pixel[0]
+    v = pixel[1]
+    x = (u - cx)*depth/fx
+    y = (v - cy)*depth/fy
+    return np.array([x,y,depth])
 
+
+def rigid_transform_3D(A, B):
+    assert len(A) == len(B)
+
+    N = A.shape[0]; # total points
+    centroid_A = np.mean(A, axis=0)
+    centroid_B = np.mean(B, axis=0)
+    # centre the points
+    AA = A - np.tile(centroid_A, (N, 1))
+    BB = B - np.tile(centroid_B, (N, 1))
+    # dot is matrix multiplication for array
+    H = np.dot(np.transpose(AA), BB)
+    U, S, Vt = np.linalg.svd(H)
+    R = np.dot(Vt.T , U.T)
+    # special reflection case
+    if np.linalg.det(R) < 0:
+       print "Reflection detected"
+       Vt[2,:] *= -1
+       R = np.dot(Vt.T , U.T)
+    t = -np.dot(R,centroid_A.T) + centroid_B.T
+    print t
+    return R, t

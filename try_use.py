@@ -20,12 +20,12 @@ def main():
 	# close arms
 	y.left.close_gripper(force=2,wait_for_res=False)
 	y.right.close_gripper(force=2,wait_for_res=False)
-	# go_delta(np.array([[0,0,-0.002]]),"left")
-	# go_delta(np.array([[0,0.12,-0.002]]),"left")
-	# go_delta(np.array([[0.096,0,-0.002]]),"left")
-	# go_delta(np.array([[0.096,0.12,-0.002]]),"left")
-	# go_delta(np.array([[0.192,0,-0.002]]),"left")
-	# go_delta(np.array([[0.192,0.12,-0.002]]),"left")
+	go_delta(np.array([[0,0,-0.00]]),"left")
+	go_delta(np.array([[0,0.12,-0.00]]),"left")
+	go_delta(np.array([[0.096,0,-0.00]]),"left")
+	go_delta(np.array([[0.096,0.12,-0.00]]),"left")
+	go_delta(np.array([[0.192,0,-0.00]]),"left")
+	go_delta(np.array([[0.192,0.12,-0.00]]),"left")
 	
 	# go_delta(np.array([[0,0,-0.002]]),"right")
 	# go_delta(np.array([[0,0.12,-0.002]]),"right")
@@ -33,9 +33,12 @@ def main():
 	# go_delta(np.array([[0.096,0.12,-0.002]]),"right")
 	# go_delta(np.array([[0.192,0,-0.002]]),"right")
 	# go_delta(np.array([[0.192,0.12,-0.002]]),"right")
+	# go_delta(np.array([[0,0,-0.002]]),"right")
+	#point 16?
+	# go_delta(np.array([[0.048,0.072,-0.04208]]),"right")
+	#new point
+	# go_delta(np.array([[0,0,-0.002]]),"right")
 
-	go_delta(np.array([[0.048,0.072,-0.04208]]),"right")
-	
 def go_delta(point,arm):
 	c=np.transpose(point)
 	out=world_to_yumi(c,arm)
